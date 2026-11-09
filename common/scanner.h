@@ -27,7 +27,11 @@ static bool scan_template_chars(TSLexer *lexer) {
             case '`':
                 return has_content;
             case '\0':
-                return false;
+                if (lexer->eof(lexer)) {
+                    return false;
+                }
+                advance(lexer);
+                break;
             case '$':
                 advance(lexer);
                 if (lexer->lookahead == '{') {
@@ -282,25 +286,53 @@ static bool scan_jsx_text(TSLexer *lexer) {
     bool at_newline = false;
 
     while (lexer->lookahead != 0 && lexer->lookahead != '<' && lexer->lookahead != '>' && lexer->lookahead != '{' &&
-           lexer->lookahead != '}' && lexer->lookahead != '&') {
+           lexer->lookahead != '}') {
+        if (lexer->lookahead == '&') {
+            lexer->mark_end(lexer);
+            advance(lexer);
+            bool is_entity = false;
+            if (lexer->lookahead == '#') {
+                advance(lexer);
+                if (lexer->lookahead == 'x' || lexer->lookahead == 'X') {
+                    advance(lexer);
+                    int count = 0;
+                    while (count < 6 && ((lexer->lookahead >= '0' && lexer->lookahead <= '9') ||
+                                         (lexer->lookahead >= 'a' && lexer->lookahead <= 'f') ||
+                                         (lexer->lookahead >= 'A' && lexer->lookahead <= 'F'))) {
+                        advance(lexer);
+                        count++;
+                    }
+                    is_entity = (count >= 1 && lexer->lookahead == ';');
+                } else {
+                    int count = 0;
+                    while (count < 5 && (lexer->lookahead >= '0' && lexer->lookahead <= '9')) {
+                        advance(lexer);
+                        count++;
+                    }
+                    is_entity = (count >= 1 && lexer->lookahead == ';');
+                }
+            } else {
+                int count = 0;
+                while (count < 30 && ((lexer->lookahead >= 'a' && lexer->lookahead <= 'z') ||
+                                      (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z'))) {
+                    advance(lexer);
+                    count++;
+                }
+                is_entity = (count >= 1 && lexer->lookahead == ';');
+            }
+            if (is_entity) {
+                lexer->result_symbol = JSX_TEXT;
+                return saw_text;
+            }
+            at_newline = false;
+            saw_text = true;
+            continue;
+        }
+
         bool is_wspace = iswspace(lexer->lookahead);
         if (lexer->lookahead == '\n') {
             at_newline = true;
         } else {
-            // If at_newline is already true, and we see some whitespace, then it must stay true.
-            // Otherwise, it should be false.
-            //
-            // See the table below to determine the logic for computing `saw_text`.
-            //
-            // |------------------------------------|
-            // | at_newline | is_wspace | saw_text  |
-            // |------------|-----------|-----------|
-            // | false (0)  | false (0) | true  (1) |
-            // | false (0)  | true  (1) | true  (1) |
-            // | true  (1)  | false (0) | true  (1) |
-            // | true  (1)  | true  (1) | false (0) |
-            // |------------------------------------|
-
             at_newline &= is_wspace;
             if (!at_newline) {
                 saw_text = true;
@@ -310,6 +342,7 @@ static bool scan_jsx_text(TSLexer *lexer) {
         advance(lexer);
     }
 
+    lexer->mark_end(lexer);
     lexer->result_symbol = JSX_TEXT;
     return saw_text;
 }
