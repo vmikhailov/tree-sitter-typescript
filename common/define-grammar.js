@@ -201,8 +201,10 @@ module.exports = function defineGrammar(dialect) {
       )),
 
       assignment_expression: $ => prec.right('assign', seq(
-        optional('using'),
-        field('left', choice($.parenthesized_expression, $._lhs_expression)),
+        choice(
+          seq('using', field('left', $.identifier)),
+          field('left', choice($.parenthesized_expression, $._lhs_expression)),
+        ),
         '=',
         field('right', $.expression),
       )),
@@ -1100,6 +1102,7 @@ module.exports = function defineGrammar(dialect) {
         'object',
         'new',
         'readonly',
+        'using',
         previous,
       ),
     },

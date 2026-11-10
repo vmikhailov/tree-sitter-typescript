@@ -4169,30 +4169,40 @@
             "type": "CHOICE",
             "members": [
               {
-                "type": "STRING",
-                "value": "using"
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "using"
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "left",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "identifier"
+                    }
+                  }
+                ]
               },
               {
-                "type": "BLANK"
+                "type": "FIELD",
+                "name": "left",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "parenthesized_expression"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "_lhs_expression"
+                    }
+                  ]
+                }
               }
             ]
-          },
-          {
-            "type": "FIELD",
-            "name": "left",
-            "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "parenthesized_expression"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_lhs_expression"
-                }
-              ]
-            }
           },
           {
             "type": "STRING",
@@ -7225,6 +7235,10 @@
         {
           "type": "STRING",
           "value": "readonly"
+        },
+        {
+          "type": "STRING",
+          "value": "using"
         },
         {
           "type": "CHOICE",
@@ -12037,6 +12051,5 @@
     "pattern",
     "type",
     "primary_type"
-  ],
-  "reserved": {}
+  ]
 }
