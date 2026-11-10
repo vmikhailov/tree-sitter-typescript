@@ -111,6 +111,7 @@ module.exports = function defineGrammar(dialect) {
 
       [$.template_literal_type, $.template_string],
       [$.call_expression, $._type_query_call_expression],
+      [$.assignment_expression, $._initializer],
     ]).concat(
       dialect === 'typescript' ? [
         [$.primary_type, $.type_parameter],
@@ -208,6 +209,9 @@ module.exports = function defineGrammar(dialect) {
         '=',
         field('right', $.expression),
       )),
+
+      unescaped_double_jsx_string_fragment: _ => token.immediate(prec(1, /[^"]+/)),
+      unescaped_single_jsx_string_fragment: _ => token.immediate(prec(1, /[^']+/)),
 
       _augmented_assignment_lhs: ($, previous) => choice(previous, $.non_null_expression),
 
